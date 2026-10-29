@@ -1,0 +1,24 @@
+theme = "gruvbox-material"
+
+[editor]
+true-color = true
+line-number = "relative"
+
+[keys.normal]
+C-g = [
+    ":sh echo \"%{file_path_absolute}\" > ~/.cache/helix/file_path_absolute",
+    ":write-all", 
+    ":new", 
+    ":insert-output lazygit -p \"%sh{git -C ''%sh{dirname %sh{cat ~/.cache/helix/file_path_absolute}}'' rev-parse --show-toplevel}\"", 
+    ":buffer-close!", 
+    ":set mouse false", 
+    ":set mouse true",
+    ":redraw", 
+    ":reload-all"
+]
+
+
+C-k = [
+    ":sh echo \"%{file_path_absolute}\" > ~/.cache/helix/file_path_absolute",
+    ":sh tmux popup -E -d '#{pane_current_path}' -w 80%% -h 80%% lazygit -p \"%sh{git -C ''%sh{dirname %{file_path_absolute}}'' rev-parse --show-toplevel}\""
+]

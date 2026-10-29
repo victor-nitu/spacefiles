@@ -161,12 +161,16 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # alias pip="pip3"
 alias srcvenv='source .venv/bin/activate' # source venv in current directory
 
+# Linuxbrew is not on PATH by default. On macOS ~/.zprofile already does this
+[ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
 # keybinds
 export PATH="$HOME/.local/bin":$PATH
 
 # vim configs (see https://michaeluloth.com/neovim-switch-configs/)
 alias v='NVIM_APPNAME=nvim-nelson nvim' # My current config
 alias vr='NVIM_APPNAME=nvim-rover nvim' # WIP - minimal neovim configuration for development at rover
+alias vl='NVIM_APPNAME=nvim-lazyvim nvim' # LazyVim starter
 
 # MacOS specific
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -191,7 +195,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   alias rvr="rover-cli"
 
   alias t='tmux'
-  alias ld=lazydocker
 
   # pnpm
   export PNPM_HOME="$HOME/Library/pnpm"
@@ -235,6 +238,8 @@ fi
 
 # Helpful alias
 alias lg=lazygit
+alias ld=lazydocker
+alias jj=joshuto
 alias gc='gcmsg'
 alias csdot='gh codespace create -R roverdotcom/web --status -d dotfiles-nelson'
 # alias csnew='gh codespace create -R roverdotcom/web --status -d'
