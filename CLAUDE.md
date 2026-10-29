@@ -38,26 +38,31 @@ Two consequences worth internalising:
 .chezmoitemplates/     Content included by the modify_ scripts (see below)
   claude-settings.json   Desired ~/.claude/settings.json
   zshrc                  The actual zshrc — edit this, not a dot_zshrc
+  bashrc                 The actual bashrc (Linux only, oh-my-bash)
 dot_claude/            Claude Code config
-dot_config/            ghostty, tmux, nvim-nelson, nvim-rover
+dot_config/            ghostty, tmux, helix, joshuto, nvim-nelson, nvim-rover, nvim-lazyvim
+dot_Brewfile.tmpl      ~/.Brewfile, installed by run_onchange_after_brew_bundle
+dot_Packages           ~/.Packages apt list (Linux only)
+dot_local/bin/         bat/fd symlinks to Debian's batcat/fdfind (Linux only)
 dot_gitconfig.tmpl     Templated: macOS-only sections are skipped on Linux
 dot_p10k.zsh           powerlevel10k prompt
 modify_dot_zshrc.tmpl  Script that emits ~/.zshrc
+modify_dot_bashrc.tmpl Script that emits ~/.bashrc, same pattern
 run_after_*.sh         Post-apply hooks
 setup.sh               One-shot bootstrap; chezmoiignored, never a target
 ```
 
-## The two `modify_` scripts, and why they exist
+## The `modify_` scripts, and why they exist
 
-`~/.zshrc` and `~/.claude/settings.json` are both written by *other* programs
-after chezmoi writes them:
+`~/.zshrc`, `~/.bashrc` and `~/.claude/settings.json` are all written by *other*
+programs after chezmoi writes them:
 
 - Claude Code persists its own keys into `settings.json` (`tui`), and
   `run_after_wiki_setup.sh` adds `hooks`.
 - The Rover web repo's `scripts/refresh-secrets.sh` strips and re-appends an OTel
-  block to `~/.zshrc` on **every** run.
+  block to `~/.zshrc` and `~/.bashrc` on **every** run.
 
-As plain managed files, chezmoi saw both targets as externally modified and
+As plain managed files, chezmoi saw these targets as externally modified and
 stopped to ask what to do. With no TTY — a container build, CI, any
 non-interactive apply — that prompt is a hard error, and it aborted the apply
 *before the `run_after_` scripts ran*. That is the failure this design exists to
@@ -73,8 +78,11 @@ is already on disk:
   and Claude Code's own keys survive an apply instead of being reverted.
 - `modify_dot_zshrc.tmpl` — emits `.chezmoitemplates/zshrc`, then re-appends
   refresh-secrets' block if the file on disk had one.
+- `modify_dot_bashrc.tmpl` — the same for `.chezmoitemplates/bashrc`. Linux only:
+  the laptop's `~/.bashrc` carries IntelliShell, LM Studio and Rover CLI blocks a
+  managed file would wipe, so `.chezmoiignore` skips it on macOS.
 
-Both are idempotent: applying twice changes nothing the second time.
+All are idempotent: applying twice changes nothing the second time.
 
 ### Two clones, and which one chezmoi actually reads
 
@@ -145,10 +153,17 @@ Downloads go through `mktemp -d` with an EXIT trap; clones go through
 | `run_after_wiki_setup.sh` | Clones/updates the private research wiki at `/workspaces/wiki`, registers its Claude hooks, imports its schema into `~/.claude/CLAUDE.md` so it loads in every repo, sets up push auth. Codespaces-only, always exits 0 |
 | `run_after_source_zsh.sh` | Installs tmux plugins via tpm. Codespaces-only |
 | `run_after_preinstall_nvim_plugins.sh` | Headless `Lazy! sync` + `TSUpdate` for nvim-nelson |
+| `run_after_install_ecc.sh` | Everything Claude Code plugin + its rules into `~/.claude/rules/ecc`. Skips when `claude` is not on PATH |
+| `run_after_gh_extensions.sh` | `gh-dash` |
+| `run_onchange_after_brew_bundle.sh.tmpl` | Installs Homebrew if absent, then `brew bundle --global`. Re-runs when the Brewfile changes |
+| `run_onchange_after_apt_packages.sh.tmpl` | apt-installs `~/.Packages` one by one. Linux-only, re-runs when the list changes |
 | `run_once_after_fzf_install.sh` | Clones and installs fzf (needed by zoxide). Linux-only |
 
 Anything a `run_after_` script does must be idempotent and must not fail the
 apply — `setup.sh` runs `chezmoi init --apply` under `set -e`.
+
+The `run_onchange_` hashes come from `include` of the *source* file, not the rendered
+target: on the first apply the target does not exist yet when the script is rendered.
 
 Note chezmoi extracts these scripts to a temp file before executing, so
 `${BASH_SOURCE[0]}` does **not** point into this repo. `run_after_wiki_setup.sh`
@@ -161,7 +176,8 @@ back to `BASH_SOURCE` for a standalone run from a checkout.
 `NVIM_APPNAME=nvim-nelson`. That export is load-bearing: there is no
 `~/.config/nvim`, so without it a bare `nvim` — and therefore `$EDITOR` and
 anything shelling out to it — would start unconfigured. `nvim-rover` (via `vr`) is
-a WIP minimal config for Rover work.
+a WIP minimal config for Rover work, and `nvim-lazyvim` (via `vl`) a LazyVim starter.
+The Linux bashrc exports the same `NVIM_APPNAME`.
 
 `setup.sh` runs `chsh` with `/usr/bin/zsh` and the Codespaces branch of the zshrc
 exports the same path. Keep those two in step.
@@ -177,8 +193,9 @@ exports the same path. Keep those two in step.
   none today.
 - **Mode noise.** `chezmoi diff` reports 0644→0664 / 0755→0775 churn on many
   targets in Codespaces, from a umask difference. Cosmetic, unresolved.
-- **`~/.bashrc` is unmanaged** but refresh-secrets appends its block there too, so
-  it drifts freely. Fine today, since nothing here reads it.
+- **`~/.bashrc` is unmanaged on macOS** by design — see the `modify_` section.
+- **`~/.local/bin/bat` and `fd` dangle if apt failed to install them**, and since
+  `~/.local/bin` is ahead of linuxbrew on PATH they then shadow brew's copies.
 - **The merge scripts need `python3`.** Without it they fall back to writing the
   desired content alone — i.e. the old clobbering behaviour.
 - **Any stray file in the clone root becomes a `$HOME` target.** chezmoi honours
@@ -227,7 +244,7 @@ points Claude Code at this script.
 
 ## macOS vs Codespaces
 
-One repo serves both machines, so every change here reaches the laptop too. Four hooks are
+One repo serves both machines, so every change here reaches the laptop too. These are
 guarded, and on macOS they are all no-ops — none of these are failures:
 
 | Guard | Not done on macOS | Consequence |
@@ -236,6 +253,10 @@ guarded, and on macOS they are all no-ops — none of these are failures:
 | `CODESPACES` | tmux plugins (`run_after_source_zsh.sh`) | Run `~/.config/tmux/plugins/tpm/bin/install_plugins` by hand |
 | `CODESPACES` | nvim plugin preinstall | First `nvim` launch syncs Lazy itself |
 | `uname == Linux` | fzf (`run_once_after_fzf_install.sh`) | Install via Homebrew for fzf-backed zoxide (`zi`) |
+| `.chezmoi.os == linux` | apt packages, bat/fd symlinks, `~/.bashrc` | Brewfile covers the tools; the laptop's bashrc is left alone |
+
+The reverse also holds: `run_onchange_after_brew_bundle`, ECC and `gh-dash` are *not*
+guarded and do run on the laptop, and the Brewfile installs the iterm2 cask there.
 
 Both `CODESPACES` guards read `${CODESPACES}` with no `:-`, which would be an unbound-variable
 error under `set -u`. Neither script sets it, so the guard holds — but don't add `set -u` to
@@ -271,8 +292,7 @@ Roughly in order of value:
    useful as a review tool.
 4. **Decide `nvim-rover`'s fate.** Long-running WIP; either finish it or fold what
    is useful into `nvim-nelson`.
-5. **Manage `~/.bashrc`**, or confirm nothing needs it and stop wondering.
-6. **Make `setup.sh` re-runnable end to end.** The download and clone paths are
+5. **Make `setup.sh` re-runnable end to end.** The download and clone paths are
    already guarded; `chsh` and `sudo install` are not.
 
 ## House style
