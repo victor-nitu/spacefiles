@@ -53,6 +53,10 @@ clone_once https://github.com/zsh-users/zsh-autosuggestions \
 clone_once https://github.com/zsh-users/zsh-syntax-highlighting.git \
   "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
+# oh-my-bash, sourced by the managed ~/.bashrc. Cloned rather than run through its
+# installer, which would overwrite that ~/.bashrc
+clone_once https://github.com/ohmybash/oh-my-bash.git ~/.oh-my-bash --depth=1
+
 # zoxide (cd replacement)
 curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 
@@ -70,6 +74,12 @@ curl -fLo "$BUILD_DIR/lazygit.tar.gz" "https://github.com/jesseduffield/lazygit/
 tar xf "$BUILD_DIR/lazygit.tar.gz" -C "$BUILD_DIR" lazygit
 sudo install "$BUILD_DIR/lazygit" -D -t /usr/local/bin/
 
+# install lazydocker
+LAZYDOCKER_VERSION="$(latest_release jesseduffield/lazydocker)"
+curl -fLo "$BUILD_DIR/lazydocker.tar.gz" "https://github.com/jesseduffield/lazydocker/releases/download/v${LAZYDOCKER_VERSION}/lazydocker_${LAZYDOCKER_VERSION}_Linux_x86_64.tar.gz"
+tar xf "$BUILD_DIR/lazydocker.tar.gz" -C "$BUILD_DIR" lazydocker
+sudo install "$BUILD_DIR/lazydocker" -D -t /usr/local/bin/
+
 # Install tree-sitter-cli (pre-built binary, required by Neovim tree-sitter)
 TS_VERSION="$(latest_release tree-sitter/tree-sitter)"
 curl -fLo "$BUILD_DIR/tree-sitter.gz" "https://github.com/tree-sitter/tree-sitter/releases/download/v${TS_VERSION}/tree-sitter-linux-x64.gz"
@@ -80,6 +90,10 @@ sudo install "$BUILD_DIR/tree-sitter" /usr/local/bin/
 # Install LSP servers for Claude Code
 npm i -g pyright
 npm i -g typescript-language-server typescript
+
+# toolong: TUI log viewer (`tl`). Not worth aborting the bootstrap over: pip
+# refuses --user installs on an externally-managed (PEP 668) system python.
+python3 -m pip install --user toolong || echo "warning: could not install toolong" >&2
 
 # Codespaces sets GITHUB_USER, Coder does not; the Coder owner name is the same
 # GitHub username.
