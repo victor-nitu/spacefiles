@@ -1,0 +1,15 @@
+brew "bat"
+brew "fd"
+brew "fzf"
+brew "gh"
+brew "git"
+brew "htop"
+brew "httpie"
+brew "jq"
+brew "ripgrep"
+brew "zoxide"
+brew "helix"
+brew "joshuto"
+{{ if eq "darwin" .chezmoi.os -}}
+cask "iterm2"
+{{ end -}}

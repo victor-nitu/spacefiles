@@ -1,0 +1,17 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/usr/bin/env bash
+# apt-installs ~/.Packages. Re-runs whenever the list changes: hash {{ include "dot_Packages" | sha256sum }}
+#
+# One package at a time, because a single name missing from this distro's repos
+# (eza and glow are absent from older Ubuntu releases) fails a combined
+# `apt-get install` outright. Never fails the apply.
+
+command -v apt-get >/dev/null 2>&1 || exit 0
+sudo apt-get update -qq || echo "warning: apt-get update failed" >&2
+grep -v '^#' "$HOME/.Packages" | while read -r pkg; do
+  [ -n "$pkg" ] || continue
+  sudo apt-get install -y -qq --no-install-recommends "$pkg" </dev/null ||
+    echo "warning: could not install $pkg" >&2
+done
+exit 0
+{{ end -}}

@@ -4,3 +4,11 @@ setup.sh
 lazygit
 lazygit.tar.gz
 verify_rebuild.sh
+{{- if ne .chezmoi.os "linux" }}
+# Linux-only targets. The laptop's ~/.bashrc carries IntelliShell, LM Studio and
+# Rover CLI blocks that a managed bashrc would wipe.
+.Packages
+.local/bin/bat
+.local/bin/fd
+.bashrc
+{{- end }}
