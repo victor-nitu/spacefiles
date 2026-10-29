@@ -1,0 +1,24 @@
+#!/bin/sh
+# chezmoi `modify_` script: the current ~/.bashrc arrives on stdin, the new
+# contents go to stdout. Linux-only -- see .chezmoiignore.
+#
+# Same reason as modify_dot_zshrc.tmpl: the web repo's refresh-secrets.sh
+# re-appends its block to ~/.bashrc on every run, which a plain managed file
+# would turn into a blocking external-modification prompt. Edit the bashrc
+# itself at .chezmoitemplates/bashrc.
+set -eu
+
+# Must stay byte-identical to the marker refresh-secrets writes.
+MARKER="# MANAGED BY refresh-secrets: host-shell OTel gateway creds (DO NOT EDIT)"
+
+live=$(cat)
+
+cat <<'CHEZMOI_BASHRC'
+{{ includeTemplate "bashrc" . -}}
+CHEZMOI_BASHRC
+
+# The block is the marker plus the single source line that follows it.
+block=$(printf '%s\n' "$live" | grep -F -x -A1 "$MARKER" || true)
+if [ -n "$block" ]; then
+  printf '\n%s\n' "$block"
+fi

@@ -1,0 +1,63 @@
+# Enable the subsequent settings only in interactive sessions
+case $- in
+*i*) ;;
+*) return ;;
+esac
+
+# Linuxbrew is not on PATH by default
+[ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+export PATH="$HOME/.local/bin:$PATH"
+
+# Path to your oh-my-bash installation, cloned by setup.sh
+export OSH="$HOME/.oh-my-bash"
+
+OSH_THEME="robbyrussell"
+
+COMPLETION_WAITING_DOTS="true"
+
+# To disable the uses of "sudo" by oh-my-bash, please set "false" to
+# this variable.  The default behavior for the empty value is "true".
+OMB_USE_SUDO=true
+
+OMB_PROMPT_SHOW_PYTHON_VENV=false
+
+# Completions, aliases and plugins live in ~/.oh-my-bash/{completions,aliases,plugins}/*
+# Add wisely, as too many slow down shell startup.
+completions=(
+  git
+)
+
+aliases=(
+  general
+)
+
+plugins=(
+  git
+  bashmarks
+)
+
+[ -f "$OSH/oh-my-bash.sh" ] && source "$OSH/oh-my-bash.sh"
+
+# User configuration
+
+# Same editor setup as ~/.zshrc. NVIM_APPNAME is load-bearing: there is no
+# ~/.config/nvim, so a bare nvim would start unconfigured without it.
+export NVIM_APPNAME=nvim-nelson
+export EDITOR='nvim'
+
+if command -v zoxide >/dev/null 2>&1; then
+  # --cmd cd makes cd itself zoxide-backed, and defines cdi for the interactive picker
+  eval "$(zoxide init bash --cmd cd)"
+fi
+
+if command -v fzf >/dev/null 2>&1; then
+  # Debian/Ubuntu apt package
+  [ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && source /usr/share/doc/fzf/examples/key-bindings.bash
+  [ -f /usr/share/doc/fzf/examples/completion.bash ] && source /usr/share/doc/fzf/examples/completion.bash
+  # ~/.fzf, from run_once_after_fzf_install.sh
+  [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+fi
+
+alias lg=lazygit
+alias ld=lazydocker
+alias jj=joshuto
