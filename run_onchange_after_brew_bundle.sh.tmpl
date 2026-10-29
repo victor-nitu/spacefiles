@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Installs Homebrew if missing, then `brew bundle --global` against ~/.Brewfile.
+# Re-runs whenever the Brewfile changes: Brewfile hash {{ include "dot_Brewfile.tmpl" | sha256sum }}
+#
+# Never fails the apply: setup.sh runs `chezmoi init --apply` under `set -e`, and
+# a slow or broken Homebrew install should not stop the rest of the dotfiles.
+
+for brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  [ -x "$brew" ] && break
+  brew=
+done
+
+if [ -z "$brew" ]; then
+  echo "Installing Homebrew..."
+  # NONINTERACTIVE skips the confirmation prompt, which would hang without a TTY.
+  # On macOS it still needs passwordless sudo, so a fresh laptop is best done by hand.
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" ||
+    { echo "warning: Homebrew install failed, skipping brew bundle" >&2; exit 0; }
+  for brew in /opt/homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    [ -x "$brew" ] && break
+    brew=
+  done
+  [ -n "$brew" ] || { echo "warning: brew not found after install, skipping brew bundle" >&2; exit 0; }
+fi
+
+eval "$("$brew" shellenv)"
+brew bundle --global || echo "warning: brew bundle failed" >&2
+exit 0
