@@ -40,7 +40,7 @@ Two consequences worth internalising:
   zshrc                  The actual zshrc — edit this, not a dot_zshrc
   bashrc                 The actual bashrc (Linux only, oh-my-bash)
 dot_claude/            Claude Code config
-dot_config/            ghostty, tmux, helix, joshuto, nvim-nelson, nvim-rover, nvim-lazyvim
+dot_config/            ghostty, tmux, helix, joshuto, nvim (LazyVim)
 dot_Brewfile.tmpl      ~/.Brewfile, installed by run_onchange_after_brew_bundle
 dot_Packages           ~/.Packages apt list (Linux only)
 dot_local/bin/         bat/fd symlinks to Debian's batcat/fdfind (Linux only)
@@ -84,20 +84,24 @@ is already on disk:
 
 All are idempotent: applying twice changes nothing the second time.
 
-### Two clones, and which one chezmoi actually reads
+### One clone, and how chezmoi finds it
 
-There are two clones of this repo on a Codespace, and they are *not* the same directory:
+`setup.sh` runs `chezmoi init --apply --source "$DIR"`, where `$DIR` is the clone it runs
+from — on a Codespace, `/workspaces/.codespaces/.persistedshare/dotfiles`, which
+`~/.dotfiles` symlinks to. That is the clone you edit and push from, and the only one.
 
-| Path | What it is |
-|---|---|
-| `/workspaces/.codespaces/.persistedshare/dotfiles` | What Codespaces clones from the dotfiles setting, what `~/.dotfiles` symlinks to, and where you edit and push |
-| `~/.local/share/chezmoi` | chezmoi's own source dir, created by `chezmoi init` in `setup.sh`. Same remote |
+It used to be `chezmoi init $GITHUB_USER`, which made chezmoi clone the repo a second
+time into `~/.local/share/chezmoi`. That broke on Coder, whose owner name
+(`victornitu`) is not the GitHub user (`victor-nitu`).
 
-**A bare `chezmoi apply` reads the second one.** So editing a file here and running
-`chezmoi apply` applies the *old* committed content and silently reverts your edit — and a
-bare `chezmoi apply --dry-run` is checking a tree you may not have touched. Confirm with
-`chezmoi source-path` and `git -C ~/.local/share/chezmoi log --oneline -1` before trusting
-a result.
+`--source` alone only lasts for that one command: afterwards, a bare `chezmoi apply`
+would look in `~/.local/share/chezmoi` again and find nothing. `.chezmoi.toml.tmpl` is
+what makes it stick. `init` renders it into `~/.config/chezmoi/chezmoi.toml` with
+`sourceDir` set to the clone. Check with `chezmoi source-path`.
+
+A host bootstrapped before this change still has the old second clone, and a bare
+`chezmoi apply` there reads it, not your edits. Re-run
+`chezmoi init --source ~/.dotfiles` once to move it over.
 
 ### Editing these two files
 
@@ -112,7 +116,7 @@ To roll a committed change out to the live files, push it and let chezmoi pull:
 
 ```sh
 git commit -am 'why' && git push
-chezmoi update --no-tty               # git pull in its own clone, then apply
+chezmoi update --no-tty               # git pull in the source clone, then apply
 ```
 
 `chezmoi update` also re-runs every `run_after_` hook, which makes it the closest rehearsal
@@ -152,7 +156,7 @@ Downloads go through `mktemp -d` with an EXIT trap; clones go through
 |---|---|
 | `run_after_wiki_setup.sh` | Clones/updates the private research wiki at `/workspaces/wiki`, registers its Claude hooks, imports its schema into `~/.claude/CLAUDE.md` so it loads in every repo, sets up push auth. Codespaces-only, always exits 0 |
 | `run_after_source_zsh.sh` | Installs tmux plugins via tpm. Codespaces-only |
-| `run_after_preinstall_nvim_plugins.sh` | Headless `Lazy! sync` + `TSUpdate` for nvim-nelson |
+| `run_after_preinstall_nvim_plugins.sh` | Headless `Lazy! sync` + `TSUpdate`. Codespaces/Coder only |
 | `run_after_install_ecc.sh` | Everything Claude Code plugin + its rules into `~/.claude/rules/ecc`. Skips when `claude` is not on PATH |
 | `run_after_gh_extensions.sh` | `gh-dash` |
 | `run_onchange_after_brew_bundle.sh.tmpl` | Installs Homebrew if absent, then `brew bundle --global`. Re-runs when the Brewfile changes |
@@ -172,12 +176,13 @@ back to `BASH_SOURCE` for a standalone run from a checkout.
 
 ## Editors and shells
 
-`~/.zshrc` prefers nvim and falls back to vim, and exports
-`NVIM_APPNAME=nvim-nelson`. That export is load-bearing: there is no
-`~/.config/nvim`, so without it a bare `nvim` — and therefore `$EDITOR` and
-anything shelling out to it — would start unconfigured. `nvim-rover` (via `vr`) is
-a WIP minimal config for Rover work, and `nvim-lazyvim` (via `vl`) a LazyVim starter.
-The Linux bashrc exports the same `NVIM_APPNAME`.
+`~/.zshrc` prefers nvim and falls back to vim. The one nvim config is a LazyVim setup
+at the default `~/.config/nvim`, so no `NVIM_APPNAME` is needed. On this laptop that
+directory is also a git checkout of the LazyVim starter. chezmoi leaves the `.git`
+alone, but edits belong in `dot_config/nvim` here, not in that checkout.
+
+tmux reads `~/.tmux.conf` in preference to `~/.config/tmux/tmux.conf`, so a leftover
+`~/.tmux.conf` silently shadows the managed config.
 
 `setup.sh` runs `chsh` with `/usr/bin/zsh` and the Codespaces branch of the zshrc
 exports the same path. Keep those two in step.
@@ -290,9 +295,7 @@ Roughly in order of value:
    `.chezmoitemplates/zshrc`.
 3. **Resolve the umask mode churn**, so `chezmoi diff` is quiet enough to be
    useful as a review tool.
-4. **Decide `nvim-rover`'s fate.** Long-running WIP; either finish it or fold what
-   is useful into `nvim-nelson`.
-5. **Make `setup.sh` re-runnable end to end.** The download and clone paths are
+4. **Make `setup.sh` re-runnable end to end.** The download and clone paths are
    already guarded; `chsh` and `sudo install` are not.
 
 ## House style
