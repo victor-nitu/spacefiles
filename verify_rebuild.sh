@@ -22,14 +22,14 @@ chk "chezmoi apply completes non-interactively (no external-modification prompt)
 
 head_ "2. Shell"
 chk "login shell is /usr/bin/zsh" "getent passwd \"\$(id -un)\" | grep -q ':/usr/bin/zsh$'"
-chk "~/.zshrc exists and is the managed one" "grep -q 'NVIM_APPNAME' ~/.zshrc"
+chk "~/.zshrc exists and is the managed one" "grep -q 'powerlevel10k/powerlevel10k' ~/.zshrc"
 if grep -q 'MANAGED BY refresh-secrets' ~/.zshrc 2>/dev/null; then
   ok "refresh-secrets block survived the apply (merge working)"
 else
   printf '  \033[33mSKIP\033[0m  refresh-secrets block absent — expected until you run scripts/refresh-secrets.sh\n'
 fi
 chk "interactive zsh sets EDITOR=nvim" "zsh -ilc 'test \"\$EDITOR\" = nvim'"
-chk "interactive zsh sets NVIM_APPNAME=nvim-nelson" "zsh -ilc 'test \"\$NVIM_APPNAME\" = nvim-nelson'"
+chk "nvim config is in place" "test -f ~/.config/nvim/lua/config/lazy.lua"
 
 head_ "3. Claude settings merge"
 chk "settings.json is valid JSON" "python3 -m json.tool \"\$SET\""

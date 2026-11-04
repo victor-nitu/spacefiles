@@ -110,11 +110,7 @@ export LANG=en_US.UTF-8
 # fi
 
 # nvim everywhere, with a plain-vim fallback for hosts that lack it.
-# NVIM_APPNAME makes the bare `nvim` command (and so $EDITOR, and anything that
-# shells out to it) use the nvim-nelson config; without it nvim starts
-# unconfigured, since there is no ~/.config/nvim.
 if command -v nvim >/dev/null 2>&1; then
-  export NVIM_APPNAME='nvim-nelson'
   export EDITOR='nvim'
   alias vim='nvim'
   alias vi='nvim'
@@ -168,9 +164,7 @@ alias srcvenv='source .venv/bin/activate' # source venv in current directory
 export PATH="$HOME/.local/bin":$PATH
 
 # vim configs (see https://michaeluloth.com/neovim-switch-configs/)
-alias v='NVIM_APPNAME=nvim-nelson nvim' # My current config
-alias vr='NVIM_APPNAME=nvim-rover nvim' # WIP - minimal neovim configuration for development at rover
-alias vl='NVIM_APPNAME=nvim-lazyvim nvim' # LazyVim starter
+alias v='nvim'
 
 # MacOS specific
 if [[ "$(uname)" == "Darwin" ]]; then

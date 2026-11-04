@@ -40,9 +40,6 @@ plugins=(
 
 # User configuration
 
-# Same editor setup as ~/.zshrc. NVIM_APPNAME is load-bearing: there is no
-# ~/.config/nvim, so a bare nvim would start unconfigured without it.
-export NVIM_APPNAME=nvim-nelson
 export EDITOR='nvim'
 
 if command -v zoxide >/dev/null 2>&1; then
