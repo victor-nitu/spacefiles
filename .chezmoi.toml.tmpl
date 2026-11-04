@@ -1,0 +1,4 @@
+# setup.sh runs `chezmoi init --source <clone>`. Recording that clone here makes a
+# later bare `chezmoi apply` / `chezmoi update` read it too, instead of looking for
+# a ~/.local/share/chezmoi that was never created.
+sourceDir = {{ .chezmoi.sourceDir | quote }}

@@ -95,12 +95,8 @@ npm i -g typescript-language-server typescript
 # refuses --user installs on an externally-managed (PEP 668) system python.
 python3 -m pip install --user toolong || echo "warning: could not install toolong" >&2
 
-# Codespaces sets GITHUB_USER, Coder does not; the Coder owner name is the same
-# GitHub username.
-if [[ -n "${CODER_WORKSPACE_OWNER_NAME:-}" ]]; then
-  export GITHUB_USER="${GITHUB_USER:-$CODER_WORKSPACE_OWNER_NAME}"
-fi
-
-# Apply the dotfiles. This also runs the run_after_* hooks, one of which sets up
-# the personal research wiki -- see run_after_wiki_setup.sh.
-$HOME/.local/bin/chezmoi init --apply $GITHUB_USER
+# Apply the dotfiles from this clone. Resolving the repo from a username breaks on
+# Coder, whose owner name (victornitu) is not the GitHub user (victor-nitu). This
+# also runs the run_after_* hooks, one of which sets up the personal research
+# wiki -- see run_after_wiki_setup.sh.
+$HOME/.local/bin/chezmoi init --apply --source "$DIR"
