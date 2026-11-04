@@ -161,7 +161,7 @@ alias srcvenv='source .venv/bin/activate' # source venv in current directory
 [ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 # keybinds
-export PATH="$HOME/.local/bin":$PATH
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
 # vim configs (see https://michaeluloth.com/neovim-switch-configs/)
 alias v='nvim'

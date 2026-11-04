@@ -6,7 +6,7 @@ esac
 
 # Linuxbrew is not on PATH by default
 [ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
 # Path to your oh-my-bash installation, cloned by setup.sh
 export OSH="$HOME/.oh-my-bash"
