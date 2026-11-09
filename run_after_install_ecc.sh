@@ -8,7 +8,7 @@
 
 set -uo pipefail
 
-ECC_REPO=https://github.com/affaan-m/everything-claude-code
+ECC_REPO=https://github.com/affaan-m/ECC
 ECC_DIR="$HOME/.ecc"
 
 if ! command -v claude >/dev/null 2>&1; then
@@ -21,7 +21,7 @@ claude plugin marketplace list 2>/dev/null | grep -q 'everything-claude-code' ||
   echo "ecc: could not add marketplace" >&2
 
 claude plugin list 2>/dev/null | grep -q 'everything-claude-code@everything-claude-code' ||
-  claude plugin install everything-claude-code@everything-claude-code ||
+  claude plugin install ecc@ecc ||
   echo "ecc: could not install plugin" >&2
 
 if [ ! -d "$ECC_DIR" ]; then
